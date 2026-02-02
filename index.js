@@ -17,9 +17,9 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
+      "http://localhost:3000",
+      "http://l127.0.0.1:3000",
       "http://127.0.0.1:5173",
-      "https://al-wessilholding.com",
-      "https://halab-saudi.vercel.app",
       "https://financesystemawh.onrender.com",
     ],
     credentials: true,
