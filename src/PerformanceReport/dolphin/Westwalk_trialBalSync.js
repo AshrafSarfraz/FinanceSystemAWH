@@ -353,9 +353,12 @@ async function saveDirectToDB(data) {
         // no aux/cc3 dependency
       } else {
         // ✅ Normal rows: keep your old uniqueness logic
-        if (String(d.accountType).toLowerCase() === "revenue") {
-          filterKey.cc3 = d.cc3;
-        } else {
+        
+          if (String(d.accountType).toLowerCase() === "revenue") {
+            filterKey.cc3 = d.cc3 || "";
+            filterKey.cc2 = d.cc2 || "";
+          }
+          else {
           filterKey.auxcode = d.auxcode;
         }
       }
