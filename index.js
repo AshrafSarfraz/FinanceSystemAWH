@@ -20,7 +20,7 @@ app.use(
       "http://localhost:3000",
       "http://l127.0.0.1:3000",
       "http://127.0.0.1:5173",
-      "https://financesystemawh.onrender.com",
+      "https://financesystemawh-rtjt.onrender.com",
     ],
     credentials: true,
   })
