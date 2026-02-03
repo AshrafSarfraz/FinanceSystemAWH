@@ -10,7 +10,7 @@ const accountMetaMap = require("../utils/accountMaping");
 // ================= CONFIG =================
 const BASE_URL = process.env.BASE_URL;
 const FIXED_USERNAME = "MagedS";
-const FIXED_CMPSEQ = 15;
+const FIXED_CMPSEQ = 0;
 const PAGEINDEX = process.env.DOLPH_PAGEINDEX;
 
 // ✅ MP/SALARY accounts (ONLY MP depends on these)
@@ -418,8 +418,17 @@ async function fixAndSaveTrialBalanceSafely() {
   return ops.length;
 }
 
+
+async function clearTrialBalanceCollection() {
+  const db = mongoose.connection.db;
+  const collection = db.collection("westwalk_trialBal");
+  const res = await collection.deleteMany({});
+  console.log(`🧹 Cleared old data: ${res.deletedCount} docs`);
+}
+
 // ================= MAIN SYNC FUNCTION =================
 async function syncTrialBalance() {
+  await clearTrialBalanceCollection(); // <-- ye line add karo
   const { authkey, cookie } = await dolphinLogin();
   const rows = await fetchTrialBalance(authkey, cookie);
 
