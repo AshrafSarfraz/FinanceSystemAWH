@@ -28,6 +28,16 @@ const TrialBal =
 // 🔹 Pick only required fields
 
 function pickFields(r) {
+  const acc = String(r.accountno || "");
+
+  let normalizedType = "Other";
+
+  if (acc.startsWith("4")) {
+    normalizedType = "Revenue";
+  } else if (acc.startsWith("5") || acc.startsWith("6")) {
+    normalizedType = "Cost";
+  }
+
   return {
     year: r.year,
     month: r.month,
@@ -35,14 +45,19 @@ function pickFields(r) {
     cc2: r.cc2,
     cc3: r.cc3,
     auxcode: r.auxcode,
+
+    // sign fix
     balanceFirst: Number(r.balanceFirst) * -1,
+
     company: r.cmp_name,
     TypeR: r.TypeR,
-    component:r.lvl5,
-    accountType:r.lvl1
- 
+    component: r.lvl5,
+
+    // ✅ normalized
+    accountType: normalizedType,
   };
 }
+
 
 // Sync SQL → Mongo (ONLY TypeR = 'P')
 async function syncTrialBalance() {
