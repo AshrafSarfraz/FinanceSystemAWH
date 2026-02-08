@@ -1,18 +1,16 @@
-// controllers/budgetController.js
-
-// controllers/budgetController.js
 const multer = require("multer");
 const Papa = require("papaparse");
 const fs = require("fs");
+const BudgtedAmount = require("../models/budgtedAmount");
 
-// Multer setup for file upload
 const upload = multer({ dest: "uploads/" });
 
 exports.uploadBudgetCSV = [
-  upload.single("file"), // "file" = name of input field
+  upload.single("file"),
   async (req, res) => {
+    let filePath;
+
     try {
-      const db = req.app.locals.db;
       const { company, year } = req.body;
 
       if (!company || !year) {
@@ -29,88 +27,60 @@ exports.uploadBudgetCSV = [
         });
       }
 
-      const filePath = req.file.path;
+      filePath = req.file.path;
 
-      // 1️⃣ Read CSV file
       const csvText = fs.readFileSync(filePath, "utf8");
 
-      // 2️⃣ Parse CSV
       const parsed = Papa.parse(csvText, {
         header: true,
         skipEmptyLines: true,
       });
 
-      const dataArray = parsed.data.map((row) => ({
-        accountno: row.accountno,
-        cc3: row.cc3 || null,
-        month: Number(row.month),
-        year: Number(row.year),
-        TypeR: row.TypeR || "P",
-        accountType: row.accountType || "Other",
-        auxcode: row.auxcode || null,
-        balanceFirst: Number(row.balanceFirst) || 0,
-        cc2: row.cc2 || null,
-        company: row.company || company,
-        component: row.component || "",
+      const dataArray = parsed.data
+        .filter((row) => row && (row.accountno || row.month || row.year)) // basic safety
+        .map((row) => ({
+          accountno: row.accountno ?? "",
+          cc3: row.cc3 || null,
+          month: Number(row.month) || 0,
+          year: Number(row.year) || Number(year),
+          TypeR: row.TypeR || "P",
+          accountType: row.accountType || "Other",
+          auxcode: row.auxcode || null,
+          balanceFirst: Number(row.balanceFirst) || 0,
+          cc2: row.cc2 || null,
+          company: row.company || company,
+          component: row.component
+            ? row.component.replace(/^\d+\s*-\s*/, "")
+            : "",
+        }));
 
-        // optional: remove code prefix from component
-        component: row.component
-          ? row.component.replace(/^\d+\s*-\s*/, "")
-          : "",
-      }));
+      // delete old by company+year (year from request)
+      await BudgtedAmount.deleteMany({ company, year: Number(year) });
 
-      // 3️⃣ Delete existing data for that company + year
-      await db.collection("BudgtedAmount").deleteMany({
-        company,
-        year: Number(year),
-      });
-
-      // 4️⃣ Insert new data
       if (dataArray.length) {
-        await db.collection("BudgtedAmount").insertMany(dataArray);
+        await BudgtedAmount.insertMany(dataArray);
       }
 
-      // 5️⃣ Cleanup uploaded file
       fs.unlinkSync(filePath);
 
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         message: `${dataArray.length} records uploaded successfully for ${company} (${year})`,
       });
     } catch (error) {
       console.error(error);
-      res.status(500).json({
+
+      // cleanup if something failed
+      if (filePath && fs.existsSync(filePath)) {
+        try {
+          fs.unlinkSync(filePath);
+        } catch {}
+      }
+
+      return res.status(500).json({
         success: false,
         message: "CSV upload failed",
       });
     }
   },
 ];
-
-
-// exports.getAllBudgets = async (req, res) => {
-//     try {
-//       const db = req.app.locals.db; // existing DB connection
-  
-//       const data = await db
-//         .collection("BudgtedAmount") // 👈 apna collection name
-//         .find({})
-//         .toArray();
-  
-//       res.status(200).json({
-//         success: true,
-//         data
-//       });
-  
-//     } catch (error) {
-//       console.log(error);
-  
-//       res.status(500).json({
-//         success: false,
-//         message: "Data fetch failed"
-//       });
-//     }
-//   };
-  
-
-  
