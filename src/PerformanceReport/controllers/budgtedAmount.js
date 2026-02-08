@@ -46,7 +46,7 @@ exports.uploadBudgetCSV = [
           TypeR: row.TypeR || "P",
           accountType: row.accountType || "Other",
           auxcode: row.auxcode || null,
-          balanceFirst: Number(row.balanceFirst) || 0,
+          budgetedAmount: Number(row.budgetedAmount) || 0,
           cc2: row.cc2 || null,
           company: row.company || company,
           component: row.component

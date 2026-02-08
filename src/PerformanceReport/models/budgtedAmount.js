@@ -9,7 +9,7 @@ const BudgtedAmountSchema = new mongoose.Schema(
     TypeR: { type: String, default: "P" },
     accountType: { type: String, default: "Other" },
     auxcode: { type: String, default: null },
-    balanceFirst: { type: Number, default: 0 },
+    budgetedAmount: { type: Number, default: 0 },
     cc2: { type: String, default: null },
     company: String,
     component: { type: String, default: "" },
