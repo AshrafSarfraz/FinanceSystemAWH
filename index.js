@@ -36,7 +36,7 @@ mongoose
 // Routes
 app.use("/api/othercmp_trialbalance", otherCmpTrialBalance);
 app.use("/api/trialbalance", trialBalSyncRoutes);
-app.use("/api/budgted", budgetRoutes);
+// app.use("/api/budgted", budgetRoutes);
 app.use("/budgets", UploadBudget);
 
 // Port
