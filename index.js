@@ -9,6 +9,7 @@ const app = express(); // ✅ Sab se pehle app
 const trialBalSyncRoutes = require("./src/PerformanceReport/routes/westwalk_trialBalSync");
 const otherCmpTrialBalance = require("./src/PerformanceReport/database/sqlconfig");
 const budgetRoutes = require("./src/PerformanceReport/routes/budgtedAmount");
+const UploadBudget = require("./src/PerformanceReport/routes/budgtedAmount");
 
 // Middleware
 app.use(express.json());
@@ -36,6 +37,7 @@ mongoose
 app.use("/api/othercmp_trialbalance", otherCmpTrialBalance);
 app.use("/api/trialbalance", trialBalSyncRoutes);
 app.use("/api/budgted", budgetRoutes);
+app.use("/budgets", UploadBudget);
 
 // Port
 const PORT = process.env.PORT || 3000;
