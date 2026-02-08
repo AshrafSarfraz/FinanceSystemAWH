@@ -8,8 +8,7 @@ const app = express(); // ✅ Sab se pehle app
 // Routes
 const trialBalSyncRoutes = require("./src/PerformanceReport/routes/westwalk_trialBalSync");
 const otherCmpTrialBalance = require("./src/PerformanceReport/database/sqlconfig");
-const budgetRoutes = require("./src/PerformanceReport/routes/budgtedAmount");
-const UploadBudget = require("./src/PerformanceReport/routes/budgtedAmount");
+const UploadBudget = require("./src/PerformanceReport/routes/uploadBudget");
 
 // Middleware
 app.use(express.json());
