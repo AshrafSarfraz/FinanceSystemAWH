@@ -38,6 +38,9 @@ function pickFields(r) {
     normalizedType = "Cost";
   }
 
+  // 🔹 Clean lvl5 (remove prefix numbers + dash)
+  const cleanedComponent = r.lvl5 ? r.lvl5.replace(/^\d+\s*-\s*/, "") : "";
+
   return {
     year: r.year,
     month: r.month,
@@ -51,12 +54,13 @@ function pickFields(r) {
 
     company: r.cmp_name,
     TypeR: r.TypeR,
-    component: r.lvl5,
+    component: cleanedComponent, // ✅ cleaned value
 
-    // ✅ normalized
+    // normalized
     accountType: normalizedType,
   };
 }
+
 
 
 // Sync SQL → Mongo (ONLY TypeR = 'P')
