@@ -85,24 +85,32 @@ async function syncTrialBalance() {
     return;
   }
 
+
+
   // 3) ✅ Upsert so it clubs monthly on cc3+accountno
   await TrialBal.bulkWrite(
     cleaned.map((d) => ({
       updateOne: {
         filter: {
+          TypeR: d.TypeR,
+          company: d.company,
           year: d.year,
           month: d.month,
           accountno: d.accountno,
           cc3: d.cc3,
+          cc2: d.cc2 || "",
+          auxcode: d.auxcode || "",
         },
         update: { $set: d },
         upsert: true,
       },
     }))
   );
+  
 
   console.log(`✅ Synced ${cleaned.length} records (TypeR=P, year>=2023)`);
 }
+
 
 
 // Routes
