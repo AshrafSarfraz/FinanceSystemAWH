@@ -1,14 +1,19 @@
+// 
+
+
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 require("dotenv").config();
+const cron = require("node-cron");
 
-const app = express(); // ✅ Sab se pehle app
+const { runNightlySync } = require("./src/PerformanceReport/cron/automaticCallApi");
 
-// Routes
-const trialBalSyncRoutes = require("./src/PerformanceReport/routes/westwalk_trialBalSync");
-const otherCmpTrialBalance = require("./src/PerformanceReport/database/sqlconfig");
-const UploadBudget = require("./src/PerformanceReport/routes/uploadBudget");
+// ✅ app must be created BEFORE using it
+const app = express();
+
+// Port (define before listen)
+const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(express.json());
@@ -18,7 +23,7 @@ app.use(
     origin: [
       "http://localhost:5173",
       "http://localhost:3000",
-      "http://l127.0.0.1:3000",
+      "http://127.0.0.1:3000",
       "http://127.0.0.1:5173",
       "https://financesystemawh-rtjt.onrender.com",
     ],
@@ -26,21 +31,36 @@ app.use(
   })
 );
 
+// Routes
+const trialBalSyncRoutes = require("./src/PerformanceReport/routes/westwalk_trialBalSync");
+const {router: otherCmpTrialBalance }= require("./src/PerformanceReport/database/sqlconfig");
+const UploadBudget = require("./src/PerformanceReport/routes/uploadBudget");
+
+app.use("/api/othercmp_trialbalance", otherCmpTrialBalance);
+app.use("/api/trialbalance", trialBalSyncRoutes);
+app.use("/budgets", UploadBudget);
+
 // MongoDB Connect
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB Connected ✅"))
   .catch((err) => console.log("Mongo Error ❌", err));
 
-// Routes
-app.use("/api/othercmp_trialbalance", otherCmpTrialBalance);
-app.use("/api/trialbalance", trialBalSyncRoutes);
-// app.use("/api/budgted", budgetRoutes);
-app.use("/budgets", UploadBudget);
+// ✅ Schedule nightly at 4 AM Qatar time
+cron.schedule(
+  "0 4 * * *",
+  async () => {
+    await runNightlySync();
+  },
+  { timezone: "Asia/Qatar" }
+);
 
-// Port
-const PORT = process.env.PORT || 3000;
+console.log("⏰ Nightly sync scheduled at 4:00 AM Asia/Qatar");
 
+// ✅ ONLY ONE listen
 app.listen(PORT, () => {
   console.log("Server running on port:", PORT);
+
+  // ✅ OPTIONAL: manual test (run once on startup)
+  // runNightlySync();
 });

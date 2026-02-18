@@ -134,4 +134,10 @@ router.post("/sync", async (req, res) => {
   res.send("✅ Manual sync complete (TypeR = P)");
 });
 
-module.exports = router;
+module.exports = {
+  router,
+  syncTrialBalance,
+};
+
+
+
