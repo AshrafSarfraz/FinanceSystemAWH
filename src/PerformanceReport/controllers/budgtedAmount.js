@@ -116,7 +116,7 @@ exports.getAllBudgetedData = async (req, res) => {
     if (cc2) filter.cc2 = cc2;
     if (cc3) filter.cc3 = cc3;
     if (auxcode) filter.auxcode = auxcode;
-    if (TypeR) filter.TypeR = TypeR;
+  
 
     // partial match for component (optional)
     if (component) filter.component = { $regex: component, $options: "i" };
