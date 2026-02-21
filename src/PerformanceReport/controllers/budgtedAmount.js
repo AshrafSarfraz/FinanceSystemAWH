@@ -100,7 +100,7 @@ exports.getAllBudgetedData = async (req, res) => {
       component,
 
       page = 1,
-      limit = 500, // default
+      limit = 50000, // default
       sortBy = "year",
       sortOrder = "desc",
     } = req.query;
