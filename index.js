@@ -35,10 +35,15 @@ app.use(
 const trialBalSyncRoutes = require("./src/PerformanceReport/routes/westwalk_trialBalSync");
 const {router: otherCmpTrialBalance }= require("./src/PerformanceReport/database/sqlconfig");
 const UploadBudget = require("./src/PerformanceReport/routes/uploadBudget");
+const trialBalanceMergeRoutes = require("./src/PerformanceReport/routes/mergeData");
+
+
 
 app.use("/api/othercmp_trialbalance", otherCmpTrialBalance);
 app.use("/api/trialbalance", trialBalSyncRoutes);
 app.use("/budgets", UploadBudget);
+app.use("/api/trialbalance", trialBalanceMergeRoutes);
+
 
 // MongoDB Connect
 mongoose

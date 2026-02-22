@@ -162,7 +162,7 @@ function aggregateRevenueMonthlyByCc3Account(rows) {
 
       // optional: if component differs due to cc2 logic, mark Mixed (to avoid lying)
       if (String(prev.component || "") !== String(r.component || "")) {
-        prev.component = "Mixed";
+        prev.component = "Residential";
       }
     }
   }
@@ -609,6 +609,10 @@ module.exports = {
   saveDirectToDB,
   syncTrialBalance,
 };
+
+
+
+
 
 
 // // controllers/syncTrialBalanceWithMP.controller.js

@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const service = require("../dolphin/Westwalk_trialBalSync");
+const { getTrialBalanceData } = require("../controllers/TB_Map_Budget");
 
 // Manual API trigger
 router.post("/sync", async (req, res) => {
@@ -31,10 +32,6 @@ router.post("/", async (req, res) => {
   }
 });
 
-
-
-
-const { getTrialBalanceData } = require("../controllers/ww_TrailBal");
 
 // GET /api/trial-balance?year=2023&month=1&accountType=Cost
 router.get("/mongo", getTrialBalanceData);

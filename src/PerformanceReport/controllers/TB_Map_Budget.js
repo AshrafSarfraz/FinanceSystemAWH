@@ -36,7 +36,7 @@ function makeKey(x) {
 async function getTrialBalanceData(req, res) {
   try {
     const db = mongoose.connection.db;
-    const collection = db.collection("westwalk_trialBal");
+    const collection = db.collection("TrailBalance");
     const budgetCol = db.collection("BudgtedAmount");
 
     const {

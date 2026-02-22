@@ -1,3 +1,5 @@
+https://financesystemawh-rtjt.onrender.com
+
 1- Dolphin Login and fix accoridng to type P and accountname and company name  
    
                 . src/performanceReport/dolphin/ww_Api
@@ -15,6 +17,10 @@ http://localhost:3000/api/othercmp_trialbalance/mongo
 
 
 
-
-
 http://localhost:3000/api/budgted
+
+
+
+
+---------------------------------------
+http://localhost:3000/budgets/getdata
