@@ -44,13 +44,19 @@ const accountMetaMap = {
     "51110": { company: "Assets Services Company", component: "LPG Woqod Consumption", type: "Cost" },
   
     "64117": { company: "West Walk Advertisement", component: "Events", type: "Cost" },
-    "62101": { company: "West Walk Advertisement", component: "Online Marketing", type: "Cost" },
+    "62101": { company: "West Walk Advertisement", component: "Events", type: "Cost" },
+    "62102": { company: "West Walk Advertisement", component: "Online Marketing", type: "Cost" },
     "62104": { company: "West Walk Advertisement", component: "Offline Marketing", type: "Cost" },
     "62106": { company: "West Walk Advertisement", component: "Events", type: "Cost" },
     "62110": { company: "West Walk Advertisement", component: "Events", type: "Cost" },
     "62119": { company: "West Walk Advertisement", component: "Events", type: "Cost" },
     "62121": { company: "West Walk Advertisement", component: "Events", type: "Cost" },
     "62207": { company: "West Walk Advertisement", component: "Events", type: "Cost" },
+    "64106": { company: "West Walk Advertisement", component: "Professional Fees", type: "Cost" },
+    "64114": { company: "West Walk Advertisement", component: "Professional Fees", type: "Cost" },
+    "64130": { company: "West Walk Advertisement", component: "Professional Fees", type: "Cost" },
+
+
   
     "61101": { company: "Man Power / Salaries", component: "Office Staff", type: "Cost" },
     "61103": { company: "Man Power / Salaries", component: "Office Staff", type: "Cost" },
@@ -63,6 +69,9 @@ const accountMetaMap = {
     "64101": { company: "Man Power / Salaries", component: "Office Staff", type: "Cost" },
     "64105": { company: "Man Power / Salaries", component: "Office Staff", type: "Cost" },
     "64121": { company: "Man Power / Salaries", component: "Office Staff", type: "Cost" },
+   
+   
+    
   };
   
   module.exports = accountMetaMap;
