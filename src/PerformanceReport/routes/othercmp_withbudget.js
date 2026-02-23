@@ -3,4 +3,4 @@ const {
   } = require("../controllers/othercmp_withBudget");
   
 
-  router.get("/mongo-with-budget", getOtherCompaniesTrialBalanceWithBudget);
+  router.get("/othercmp-with-budget", getOtherCompaniesTrialBalanceWithBudget);

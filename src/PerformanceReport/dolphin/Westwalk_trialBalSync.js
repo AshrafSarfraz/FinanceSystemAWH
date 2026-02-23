@@ -47,7 +47,7 @@ const ASC_MP_SUBSPLIT = [
 
 // synthetic MP monthly sum account
 const MP_SUM_ACCOUNTNO =
-  "61101,61103,61104,61105,61106,61115,61116,64101,64105,64121";
+  "61101, 61103, 61104, 61105, 61106, 61115, 61116, 64101, 64105, 64121";
 
 // ✅ mark for cost yearly view docs INSIDE SAME collection
 const COST_YEARLY_VIEW_TYPE = "YEARLY_COST_VIEW";
@@ -132,7 +132,7 @@ function applyFixToRow(r) {
 
   // works with original cc2 "Residential Rental" OR normalized "Residential"
   if (isRevenue && acc === "41112" && cc2.includes("residential")) {
-    return { ...r, component: "Residential", accountno: "41112" };
+    return { ...r, component: "Residential", accountno: "41111" };
   }
 
   return r;
