@@ -62,7 +62,7 @@ async function getTrialBalanceData(req, res) {
     if (year !== undefined && year !== "") base.year = Number(year);
     if (company) base.company = String(company);
     if (accountType) base.accountType = String(accountType);
-    if (accountno) base.accountno = String(accountno);
+    // if (accountno) base.accountno = String(accountno);
     if (component) base.component = String(component);
     if (auxcode !== undefined) base.auxcode = String(auxcode);
     if (cc2 !== undefined && cc2 !== "") base.cc2 = String(cc2); // optional filter

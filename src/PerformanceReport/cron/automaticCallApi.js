@@ -1,47 +1,43 @@
 require("dotenv").config();
 const mongoose = require("mongoose");
 
-// ✅ import both sync functions
-const {
-  syncTrialBalance: syncWestwalkTrialBalance,
-} = require("../dolphin/Westwalk_trialBalSync");
-
-const {
-  syncTrialBalance: syncOtherCompaniesTrialBalance,
-} = require("../database/sqlconfig"); 
-// NOTE: yeh file agar router export kar rahi hai, to controller function export karna hoga.
-// (Agar yeh Express router hai, mujhe batao, main controller separate karwa dunga.)
+const { mergeAllIntoTrialBalance } = require("../controllers/mergeData");
 
 async function ensureMongoConnected() {
   if (mongoose.connection.readyState === 1) return;
-
-  if (mongoose.connection.readyState === 2) {
-    await new Promise((resolve, reject) => {
-      mongoose.connection.once("connected", resolve);
-      mongoose.connection.once("error", reject);
-    });
-    return;
-  }
 
   await mongoose.connect(process.env.MONGO_URI);
 }
 
 async function runNightlySync() {
-  console.log("🕓 Nightly sync started:", new Date().toISOString());
+  console.log("🕓 Nightly merge started:", new Date().toISOString());
 
   try {
     await ensureMongoConnected();
 
-    console.log("Running WestWalk sync...");
-    const westwalkRes = await syncWestwalkTrialBalance();
+    // ✅ fake req, res
+    const fakeReq = {
+      body: {} // empty, so default 2023 use hoga
+    };
 
-    console.log("Running Other Companies sync...");
-    await syncOtherCompaniesTrialBalance();
+    const fakeRes = {
+      json: (data) => {
+        console.log("✅ Merge result:", data);
+      },
+      status: (code) => ({
+        json: (data) => {
+          console.error("❌ Merge error:", code, data);
+        }
+      })
+    };
 
-    console.log("✅ Nightly sync done.");
-    console.log("WestWalk result:", westwalkRes);
+    // ✅ direct same function call
+    await mergeAllIntoTrialBalance(fakeReq, fakeRes);
+
+    console.log("✅ Nightly merge finished");
+
   } catch (err) {
-    console.error("❌ Nightly sync failed:", err);
+    console.error("❌ Nightly failed:", err);
   }
 }
 

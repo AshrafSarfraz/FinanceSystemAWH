@@ -76,50 +76,32 @@ async function saveIntoTrailBalanceCollection(data = []) {
 
 // ✅ POST API
 async function mergeAllIntoTrialBalance(req, res) {
-
   try {
-
     const yearGte = Number(req.body?.yearGte) || 2023;
-
-
     // sync both
     await Promise.all([
       syncWestWalk(),
       syncOtherCompanies(),
     ]);
-
-
     // fetch
     const { westwalk, other } = await fetchBothFromMongo({ yearGte });
-
-
     // combine
     const combined = combineRows(westwalk, other);
-
-
     // save into TrailBalance
     const savedCount = await saveIntoTrailBalanceCollection(combined);
 
-
-
     return res.json({
-
-      ok: true,
-
+     ok: true,
       counts: {
         westwalk: westwalk.length,
         otherCompanies: other.length,
         combined: combined.length,
         saved: savedCount,
       },
-
       message: "Data combined and saved into TrailBalance collection",
 
     });
-
-
   } catch (err) {
-
     return res.status(500).json({
       ok: false,
       error: String(err.message),
@@ -133,17 +115,13 @@ async function mergeAllIntoTrialBalance(req, res) {
 
 // ✅ GET combined from TrailBalance
 async function getTrailBalance(req, res) {
-
   try {
-
     const db = mongoose.connection.db;
 
     const data = await db
       .collection("TrailBalance")
       .find({})
       .toArray();
-
-
     res.json({
       ok: true,
       total: data.length,
