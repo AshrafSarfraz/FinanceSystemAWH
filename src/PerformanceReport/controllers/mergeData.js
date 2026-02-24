@@ -152,8 +152,6 @@
 
 
 
-
-
 const mongoose = require("mongoose");
 
 const { syncTrialBalance: syncWestWalk } = require("../dolphin/Westwalk_trialBalSync");
@@ -315,3 +313,4 @@ module.exports = {
   mergeAllIntoTrialBalance,
   getTrailBalance,
 };
+
