@@ -17,10 +17,19 @@ http://localhost:3000/api/othercmp_trialbalance/mongo
 
 
 
-http://localhost:3000/api/budgted
+http://localhost:3000/api/trialbalance/sync-all      api to merge and get latest data 
 
 
 
 
 ---------------------------------------
 http://localhost:3000/budgets/getdata
+
+
+
+
+
+-----------------------------------------
+http://localhost:3000/ProjectsTrailBalance   
+http://localhost:3000/ProjectsTrailBalance
+http://localhost:3000/ProjectsTrailBalance:/id            
