@@ -339,6 +339,5 @@ async function getTrialBalanceData(req, res) {
 }
 
 
-
 module.exports =
   { getTrialBalanceData };

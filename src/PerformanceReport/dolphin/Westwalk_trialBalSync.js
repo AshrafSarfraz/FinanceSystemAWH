@@ -52,6 +52,16 @@ const MP_SUM_ACCOUNTNO =
 // ✅ mark for cost yearly view docs INSIDE SAME collection
 const COST_YEARLY_VIEW_TYPE = "YEARLY_COST_VIEW";
 
+// ================= ✅ NEW: MA MONTHLY SUM =================
+// ✅ 5 accounts to club into 1 monthly row
+const MA_ACCOUNTS = new Set(["44104", "44107", "44122", "44124", "44125"]);
+
+// ✅ synthetic MA monthly sum "accountno"
+const MA_SUM_ACCOUNTNO = "44104, 44107, 44122, 44124, 44125";
+
+// ✅ component name required by you
+const MA_COMPONENT_NAME = "Tenant Variation Request";
+
 // ================= HELPERS =================
 function pickTrialBalanceFields(r) {
   return {
@@ -78,10 +88,16 @@ function isMpSalaryRow(d) {
   return MP_SALARY_ACCOUNTS.has(String(d.accountno));
 }
 
+/**
+ * ✅ MA row detection: ONLY by accountno list
+ */
+function isMaRow(d) {
+  return MA_ACCOUNTS.has(String(d.accountno));
+}
+
 // ================= ✅ WestWalk RE Revenue: Component ONLY from cc2 =================
 // ✅ Only for West Walk Real Estate + Revenue
 // ✅ component decided ONLY by cc2 (Residential / Commercial)
-// ✅ normalize cc2 => "Residential" | "Commercial" (optional but helpful)
 function applyReRevenueComponentFromCc2(r) {
   const company = String(r.company || "").trim();
   const isRevenue =
@@ -160,9 +176,9 @@ function aggregateRevenueMonthlyByCc3Account(rows) {
       prev.balanceFirst =
         (Number(prev.balanceFirst) || 0) + (Number(r.balanceFirst) || 0);
 
-      // optional: if component differs due to cc2 logic, mark Mixed (to avoid lying)
+      // keep a stable component if mixed; you can change if needed
       if (String(prev.component || "") !== String(r.component || "")) {
-        prev.component = "Residential";
+        prev.component = prev.component || r.component || "Residential";
       }
     }
   }
@@ -321,6 +337,50 @@ function buildMpMonthlySplitRows(mpRows) {
         syncedAt: now,
       });
     }
+  }
+
+  return out;
+}
+
+// ================= ✅ NEW: MA CLUB (MONTHLY SUM) =================
+// ✅ Sums 5 accounts into 1 monthly row per (year, month, company, accountType)
+function buildMaMonthlySumRows(maRows) {
+  const map = new Map(); // key => {year, month, company, accountType, total}
+
+  const now = new Date();
+  const out = [];
+
+  for (const r of maRows || []) {
+    const year = Number(r.year);
+    const month = Number(r.month);
+    if (!year || !isValidMonth(month)) continue;
+
+    const company = String(r.company || "").trim();
+    const accountType = String(r.accountType || "").trim() || "Unknown";
+
+    // keep company-wise + type-wise, so revenue/cost won't mix
+    const key = `${year}||${month}||${company}||${accountType}`;
+
+    const prev = map.get(key) || { year, month, company, accountType, total: 0 };
+    prev.total += Number(r.balanceFirst) || 0;
+    map.set(key, prev);
+  }
+
+  for (const v of map.values()) {
+    out.push({
+      year: v.year,
+      month: v.month,
+      typeR: "P",
+      accountno: MA_SUM_ACCOUNTNO,
+      auxcode: "", // keep empty
+      cc2: "",
+      cc3: "",
+      company: v.company,
+      component: MA_COMPONENT_NAME, // ✅ "Tenant Variation Request"
+      accountType: v.accountType,   // keep original type (Revenue/Cost)
+      balanceFirst: round2(v.total),
+      syncedAt: now,
+    });
   }
 
   return out;
@@ -487,8 +547,9 @@ async function saveDirectToDB(data) {
         d.cc2 = "";
       }
 
-      // ✅ MP detection MUST be by accountno now
+      // ✅ synthetic detection by accountno string
       const isMp = String(d.accountno) === MP_SUM_ACCOUNTNO;
+      const isMa = String(d.accountno) === MA_SUM_ACCOUNTNO;
 
       const isCostYearlyView =
         String(d.viewType || "") === COST_YEARLY_VIEW_TYPE &&
@@ -502,10 +563,13 @@ async function saveDirectToDB(data) {
         filterKey.company = d.company;
         filterKey.component = d.component;
         filterKey.auxcode = d.auxcode || "";
-      } else if (isMp) {
+      } else if (isMp || isMa) {
+        // ✅ MP/MA: keep 1 doc per company/component/auxcode per month
         filterKey.company = d.company;
         filterKey.component = d.component;
         filterKey.auxcode = d.auxcode || "";
+        // (optional) if you want different doc per revenue/cost:
+        filterKey.accountType = d.accountType;
       } else {
         if (isRevenue) {
           // ✅ MONTHLY revenue grouping: ONLY cc3 + accountno (NO cc2 for ANY company)
@@ -554,12 +618,19 @@ async function syncTrialBalance() {
 
   // 4) Split MP vs normal
   const mpRows = enrichedFixed.filter(isMpSalaryRow);
-  const normalOnly = enrichedFixed.filter((d) => !isMpSalaryRow(d));
+  const normalAfterMp = enrichedFixed.filter((d) => !isMpSalaryRow(d));
+
+  // ✅ NEW: Split MA from remaining normal
+  const maRows = normalAfterMp.filter(isMaRow);
+  const normalOnly = normalAfterMp.filter((d) => !isMaRow(d));
 
   // 5) MP final rows (company split + ASC sub-split)
   const mpFinalRows = buildMpMonthlySplitRows(mpRows);
 
-  // 6) Revenue + Cost
+  // ✅ NEW: MA final rows (monthly sum) with component "Tenant Variation Request"
+  const maFinalRows = buildMaMonthlySumRows(maRows);
+
+  // 6) Revenue + Cost (excluding MP + MA)
   const normalRevenueRaw = normalOnly.filter(
     (r) => String(r.accountType).toLowerCase() === "revenue"
   );
@@ -579,10 +650,11 @@ async function syncTrialBalance() {
   // 8) Save all
   const savedRevenue = await saveDirectToDB(normalRevenue);
   const savedMp = await saveDirectToDB(mpFinalRows);
+  const savedMa = await saveDirectToDB(maFinalRows);
   const savedCostMonthly = await saveDirectToDB(costMonthlyRows);
 
   console.log(
-    `Sync done. enriched=${enrichedFixed.length} revIn=${normalRevenueRaw.length} revAgg=${normalRevenue.length} revSaved=${savedRevenue} mpOriginal=${mpRows.length} mpSplitSaved=${savedMp} costMonthlyInInput=${normalCost.length} costYearlyAggRows=${costYearlyAgg.length} costMonthlySaved=${savedCostMonthly}`
+    `Sync done. enriched=${enrichedFixed.length} revIn=${normalRevenueRaw.length} revAgg=${normalRevenue.length} revSaved=${savedRevenue} mpOriginal=${mpRows.length} mpSplitSaved=${savedMp} maOriginal=${maRows.length} maSaved=${savedMa} costMonthlyInInput=${normalCost.length} costYearlyAggRows=${costYearlyAgg.length} costMonthlySaved=${savedCostMonthly}`
   );
 
   return {
@@ -593,6 +665,9 @@ async function syncTrialBalance() {
     mpRowsOriginal: mpRows.length,
     mpRowsAfterClubAndSplit: mpFinalRows.length,
     savedMpSplit: savedMp,
+    maRowsOriginal: maRows.length,
+    maRowsAfterMonthlySum: maFinalRows.length,
+    savedMaMonthly: savedMa,
     costMonthlyRowsInput: normalCost.length,
     costYearlyAggRows: costYearlyAgg.length,
     savedCostMonthly,
@@ -609,6 +684,9 @@ module.exports = {
   saveDirectToDB,
   syncTrialBalance,
 };
+
+
+
 
 
 
@@ -642,6 +720,11 @@ module.exports = {
 //   "61115", "61116", "64101", "64105", "64121",
 // ]);
 
+// // ✅ PROFESSIONAL FEES (Cost grouping)
+// const PROFESSIONAL_FEES_ACCOUNTS = new Set([
+//   "64106", "64114", "64130"
+// ]);
+
 // const MP_SPLIT_PERCENTAGES = {
 //   [C_RE]: 0.22,
 //   [C_ASSETS]: 0.6851,
@@ -658,7 +741,8 @@ module.exports = {
 // ];
 
 // // synthetic MP monthly sum account
-// const MP_SUM_ACCOUNTNO = "61101,61103,61104,61105,61106,61115,61116,64101,64105,64121";
+// const MP_SUM_ACCOUNTNO =
+//   "61101, 61103, 61104, 61105, 61106, 61115, 61116, 64101, 64105, 64121";
 
 // // ✅ mark for cost yearly view docs INSIDE SAME collection
 // const COST_YEARLY_VIEW_TYPE = "YEARLY_COST_VIEW";
@@ -713,6 +797,22 @@ module.exports = {
 //   return r;
 // }
 
+// // ================= ✅ PROFESSIONAL FEES GROUPING =================
+// // ✅ Only Cost rows
+// // ✅ If accountno is in PROFESSIONAL_FEES_ACCOUNTS => set component "Professional Fees"
+// function applyProfessionalFeesGrouping(r) {
+//   const isCost = String(r.accountType || "").toLowerCase() === "cost";
+//   if (!isCost) return r;
+
+//   const acc = String(r.accountno || "").trim();
+//   if (!PROFESSIONAL_FEES_ACCOUNTS.has(acc)) return r;
+
+//   return {
+//     ...r,
+//     component: "Professional Fees",
+//   };
+// }
+
 // // ================= ✅ REVENUE FIX (FRONTEND-LIKE) =================
 // // ✅ Apply ONLY for West Walk Real Estate
 // // ✅ allowed to use cc2 here for conversion logic
@@ -727,7 +827,7 @@ module.exports = {
 
 //   // works with original cc2 "Residential Rental" OR normalized "Residential"
 //   if (isRevenue && acc === "41112" && cc2.includes("residential")) {
-//     return { ...r, component: "Residential", accountno: "41112" };
+//     return { ...r, component: "Residential", accountno: "41111" };
 //   }
 
 //   return r;
@@ -757,7 +857,7 @@ module.exports = {
 
 //       // optional: if component differs due to cc2 logic, mark Mixed (to avoid lying)
 //       if (String(prev.component || "") !== String(r.component || "")) {
-//         prev.component = "Mixed";
+//         prev.component = "Residential";
 //       }
 //     }
 //   }
@@ -1103,7 +1203,7 @@ module.exports = {
 //         filterKey.auxcode = d.auxcode || "";
 //       } else {
 //         if (isRevenue) {
-//           // ✅ MONTHLY r evenue grouping: ONLY cc3 + accountno (NO cc2 for ANY company)
+//           // ✅ MONTHLY revenue grouping: ONLY cc3 + accountno (NO cc2 for ANY company)
 //           filterKey.cc3 = d.cc3 || "";
 //         } else {
 //           filterKey.auxcode = d.auxcode || "";
@@ -1141,18 +1241,20 @@ module.exports = {
 //   const enriched = filterAndEnrich(rows);
 
 //   // 2) ✅ WestWalk RE: use cc2 ONLY for component conversion logic
+//   // 3) ✅ Professional Fees: cost component override for specified accounts
 //   const enrichedFixed = enriched
 //     .map(applyReRevenueComponentFromCc2)
-//     .map(applyFixToRow);
+//     .map(applyFixToRow)
+//     .map(applyProfessionalFeesGrouping);
 
-//   // 3) Split MP vs normal
+//   // 4) Split MP vs normal
 //   const mpRows = enrichedFixed.filter(isMpSalaryRow);
 //   const normalOnly = enrichedFixed.filter((d) => !isMpSalaryRow(d));
 
-//   // 4) MP final rows (company split + ASC sub-split)
+//   // 5) MP final rows (company split + ASC sub-split)
 //   const mpFinalRows = buildMpMonthlySplitRows(mpRows);
 
-//   // 5) Revenue + Cost
+//   // 6) Revenue + Cost
 //   const normalRevenueRaw = normalOnly.filter(
 //     (r) => String(r.accountType).toLowerCase() === "revenue"
 //   );
@@ -1161,15 +1263,15 @@ module.exports = {
 //     (r) => String(r.accountType).toLowerCase() === "cost"
 //   );
 
-//   // ✅ 5.1) Aggregate monthly revenue for ALL companies by (year, month, accountno, cc3)
+//   // ✅ 6.1) Aggregate monthly revenue for ALL companies by (year, month, accountno, cc3)
 //   // ✅ cc2 is NOT used in sum/grouping
 //   const normalRevenue = aggregateRevenueMonthlyByCc3Account(normalRevenueRaw);
 
-//   // 6) Build yearly cost aggregation, then expand into month=1..12
+//   // 7) Build yearly cost aggregation, then expand into month=1..12
 //   const costYearlyAgg = buildCostYearlyAggRows(normalCost);
 //   const costMonthlyRows = expandCostYearlyToMonthly(costYearlyAgg);
 
-//   // 7) Save all
+//   // 8) Save all
 //   const savedRevenue = await saveDirectToDB(normalRevenue);
 //   const savedMp = await saveDirectToDB(mpFinalRows);
 //   const savedCostMonthly = await saveDirectToDB(costMonthlyRows);
