@@ -11,15 +11,6 @@ exports.uploadBudgetCSV = [
     let filePath;
 
     try {
-      const { company, year } = req.body;
-
-      if (!company || !year) {
-        return res.status(400).json({
-          success: false,
-          message: "Company and year must be provided",
-        });
-      }
-
       if (!req.file) {
         return res.status(400).json({
           success: false,
@@ -37,40 +28,61 @@ exports.uploadBudgetCSV = [
       });
 
       const dataArray = parsed.data
-        .filter((row) => row && (row.accountno || row.month || row.year)) // basic safety
+        .filter((row) => row && row.company && row.year)
         .map((row) => ({
           accountno: row.accountno ?? "",
           cc3: row.cc3 || null,
           month: Number(row.month) || 0,
-          year: Number(row.year) || Number(year),
+          year: Number(row.year),
           TypeR: row.TypeR || "P",
           accountType: row.accountType || "Other",
           auxcode: row.auxcode || null,
           budgetedAmount: Number(row.budgetedAmount) || 0,
           cc2: row.cc2 || null,
-          company: row.company || company,
+          company: row.company,
           component: row.component
             ? row.component.replace(/^\d+\s*-\s*/, "")
             : "",
         }));
 
-      // delete old by company+year (year from request)
-      await BudgtedAmount.deleteMany({ company, year: Number(year) });
-
-      if (dataArray.length) {
-        await BudgtedAmount.insertMany(dataArray);
+      if (!dataArray.length) {
+        return res.status(400).json({
+          success: false,
+          message: "No valid data found in CSV",
+        });
       }
+
+      // ✅ STEP 1: Find unique company + year combinations
+      const uniqueCompanyYears = [
+        ...new Set(
+          dataArray.map((item) => `${item.company}_${item.year}`)
+        ),
+      ];
+
+      // Convert back to objects
+      const deleteFilters = uniqueCompanyYears.map((key) => {
+        const [company, year] = key.split("_");
+        return { company, year: Number(year) };
+      });
+
+      // ✅ STEP 2: Delete old data for each company-year
+      for (const filter of deleteFilters) {
+        await BudgtedAmount.deleteMany(filter);
+      }
+
+      // ✅ STEP 3: Insert new data
+      await BudgtedAmount.insertMany(dataArray);
 
       fs.unlinkSync(filePath);
 
       return res.status(200).json({
         success: true,
-        message: `${dataArray.length} records uploaded successfully for ${company} (${year})`,
+        message: `${dataArray.length} records uploaded successfully`,
+        deletedCombinations: deleteFilters,
       });
     } catch (error) {
       console.error(error);
 
-      // cleanup if something failed
       if (filePath && fs.existsSync(filePath)) {
         try {
           fs.unlinkSync(filePath);
@@ -84,6 +96,9 @@ exports.uploadBudgetCSV = [
     }
   },
 ];
+
+
+
 
 exports.getAllBudgetedData = async (req, res) => {
   try {

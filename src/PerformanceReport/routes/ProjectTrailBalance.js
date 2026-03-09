@@ -12,9 +12,6 @@ router.post("/", controller.create);
 router.get("/", controller.getAll);
 
 
-// GET ONE
-router.get("/:id", controller.getOne);
-
 
 // UPDATE
 router.put("/:id", controller.update);
