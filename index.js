@@ -1,5 +1,3 @@
-// 
-
 
 const express = require("express");
 const mongoose = require("mongoose");
@@ -38,6 +36,10 @@ const UploadBudget = require("./src/PerformanceReport/routes/uploadBudget");
 const trialBalanceMergeRoutes = require("./src/PerformanceReport/routes/mergeData");
 const ProjectsTrailBalanceRoutes =require("./src/PerformanceReport/routes/ProjectTrailBalance");
 const CapexBalance =require("./src/PerformanceReport/routes/CapexBalance");
+const tenant =require("./src/PerformanceReport/routes/tenant");
+
+
+
 
 app.use("/api/othercmp_trialbalance", otherCmpTrialBalance);
 app.use("/api/trialbalance", trialBalSyncRoutes);
@@ -45,6 +47,10 @@ app.use("/budgets", UploadBudget);
 app.use("/api/trialbalance", trialBalanceMergeRoutes);
 app.use("/ProjectsTrailBalance", ProjectsTrailBalanceRoutes);
 app.use("/CapexBalance", CapexBalance);
+app.use("/api/tenant", tenant);
+
+
+
 
 // MongoDB Connect
 mongoose
