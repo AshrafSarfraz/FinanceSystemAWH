@@ -35,16 +35,28 @@ const createTenant = async (req, res) => {
   }
 };
 
-// ─────────────────────────────────────────
-// GET /api/tenant — Get all tenants
-// ─────────────────────────────────────────
 const getAllTenants = async (req, res) => {
   try {
     const tenants = await Tenant.find();
+
+    // Agar TOR 0 hai to recalculate karo aur DB update bhi karo
+    const updatedTenants = await Promise.all(
+      tenants.map(async (tenant) => {
+        if (tenant.tor === 0 || tenant.tor === null || tenant.tor === undefined) {
+          const recalculated = calculateTOR(tenant.totalRevenue, tenant.percentage, tenant.baseRent);
+          if (recalculated > 0) {
+            tenant.tor = recalculated;
+            await tenant.save(); // DB mein bhi fix ho jaye
+          }
+        }
+        return tenant;
+      })
+    );
+
     res.status(200).json({
       success: true,
-      count: tenants.length,
-      data: tenants,
+      count: updatedTenants.length,
+      data: updatedTenants,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -60,11 +72,22 @@ const getTenantById = async (req, res) => {
     if (!tenant) {
       return res.status(404).json({ success: false, message: "Tenant not found" });
     }
+
+    // TOR 0 hai to recalculate
+    if (tenant.tor === 0 || tenant.tor === null || tenant.tor === undefined) {
+      const recalculated = calculateTOR(tenant.totalRevenue, tenant.percentage, tenant.baseRent);
+      if (recalculated > 0) {
+        tenant.tor = recalculated;
+        await tenant.save();
+      }
+    }
+
     res.status(200).json({ success: true, data: tenant });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 // ─────────────────────────────────────────
 // PUT /api/tenant/:id — Update (TOR auto recalculate)
