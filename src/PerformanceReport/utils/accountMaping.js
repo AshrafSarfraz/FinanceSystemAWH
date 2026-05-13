@@ -23,6 +23,7 @@ const accountMetaMap = {
   
     // ===== Cost =====
     "54109": { company: "West Walk Real Estate", component: "Kahramaa", type: "Cost" },
+    "54104": { company: "West Walk Real Estate", component: "Kahramaa", type: "Cost" },
     "64115": { company: "West Walk Real Estate", component: "Internet / Telephones", type: "Cost" },
     "64114": { company: "West Walk Real Estate", component: "Office supply / Petrol", type: "Cost" },
   
