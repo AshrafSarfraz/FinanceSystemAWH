@@ -134,6 +134,26 @@ router.post("/sync", async (req, res) => {
   res.send("✅ Manual sync complete (TypeR = P)");
 });
 
+
+
+// Raw data 
+
+router.get("/raw", async (req, res) => {
+  try {
+    const pool = await sql.connect(sqlConfig);
+    const result = await pool.request().query(`
+      SELECT *
+      FROM dbo.wvfn_costcenteranalysistrialbalance
+    `);
+    res.json({
+      total: result.recordset.length,
+      data: result.recordset,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = {
   router,
   syncTrialBalance,

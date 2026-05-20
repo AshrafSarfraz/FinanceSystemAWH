@@ -9,7 +9,7 @@ http://localhost:3000/api/trialbalance/sync      get and push mapped data in mon
 http://localhost:3000/api/trialbalance/mongo          get the monthly wise data after merging   (get method)
 
 -----------------------------------------------------------------------
-
+http://localhost:3000/api/othercmp_trialbalance/raw        get raw data 
 http://localhost:3000/api/othercmp_trialbalance 
 http://localhost:3000/api/othercmp_trialbalance/sync       get data from Database Sql   (Get Method)
 http://localhost:3000/api/othercmp_trialbalance/mongo
@@ -17,7 +17,7 @@ http://localhost:3000/api/othercmp_trialbalance/mongo
 
 
 
-http://localhost:3000/api/trialbalance/sync-all      api to merge and get latest data 
+http://localhost:3000/api/trialbalance/sync-all           api to merge and get latest data 
 
 
 

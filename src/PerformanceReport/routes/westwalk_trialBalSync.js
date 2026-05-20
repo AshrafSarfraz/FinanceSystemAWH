@@ -39,3 +39,21 @@ router.get("/mongo", getTrialBalanceData);
 
 
 module.exports = router;
+
+
+
+
+
+
+// Raw Data 
+
+// const express = require("express");
+// const router = express.Router();
+
+// const {
+//   getRawTrialBalance,
+// } = require("../dolphin/Westwalk_trialBalSync");
+
+// router.get("/raw-trial-balance", getRawTrialBalance);
+
+// module.exports = router;
