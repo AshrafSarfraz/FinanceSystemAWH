@@ -68,14 +68,14 @@ async function syncTrialBalance() {
   const pool = await sql.connect(sqlConfig);
 
   // 1) ✅ Delete previous stored data (only for 2023+ and TypeR=P)
-  await TrialBal.deleteMany({ TypeR: "P", year: { $gte: 2023 } });
+  await TrialBal.deleteMany({ TypeR: "P", year: { $gte: 2025 } });
 
   // 2) ✅ Fetch only 2023+ from SQL
   const result = await pool.request().query(`
     SELECT *
     FROM dbo.wvfn_costcenteranalysistrialbalance
     WHERE TypeR = 'P'
-      AND year >= 2023
+      AND year >= 2025
   `);
 
   const cleaned = result.recordset.map(pickFields);

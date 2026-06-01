@@ -109,27 +109,27 @@ function applyReRevenueComponentFromCc2(r) {
 // ================= ✅ REVENUE FIX =================
 // ✅ Apply ONLY for West Walk Real Estate
 // ✅ allowed to use cc2 here for conversion logic
-function applyFixToRow(r) {
-  const company = String(r.company || "").trim();
-  if (company !== C_RE) return r;
+// function applyFixToRow(r) {
+//   const company = String(r.company || "").trim();
+//   if (company !== C_RE) return r;
 
-  const isRevenue =
-    String(r.accountType || "").trim().toLowerCase() === "revenue";
+//   const isRevenue =
+//     String(r.accountType || "").trim().toLowerCase() === "revenue";
 
-  const acc = String(r.accountno || "").trim();
-  const cc2 = String(r.cc2 || "").trim().toLowerCase();
+//   const acc = String(r.accountno || "").trim();
+//   const cc2 = String(r.cc2 || "").trim().toLowerCase();
 
-  // works with original cc2 "Residential Rental" OR normalized "Residential"
-  if (isRevenue && acc === "41112" && cc2.includes("residential")) {
-    return {
-      ...r,
-      component: "Residential",
-      accountno: "41111",
-    };
-  }
+//   // works with original cc2 "Residential Rental" OR normalized "Residential"
+//   if (isRevenue && acc === "41112" && cc2.includes("residential")) {
+//     return {
+//       ...r,
+//       component: "Residential",
+//       accountno: "41111",
+//     };
+//   }
 
-  return r;
-}
+//   return r;
+// }
 
 // ================= ✅ Aggregate Revenue Monthly ALL companies =================
 // ✅ key = year + month + company + accountno + cc3
@@ -531,7 +531,7 @@ async function syncTrialBalance() {
   // 2) Only keep required RE revenue fixes
   const enrichedFixed = enriched
     .map(applyReRevenueComponentFromCc2)
-    .map(applyFixToRow);
+
 
   // 3) Revenue rows
   const revenueRaw = enrichedFixed.filter(

@@ -37,7 +37,7 @@ const trialBalanceMergeRoutes = require("./src/PerformanceReport/routes/mergeDat
 const ProjectsTrailBalanceRoutes =require("./src/PerformanceReport/routes/ProjectTrailBalance");
 const CapexBalance =require("./src/PerformanceReport/routes/CapexBalance");
 const tenant =require("./src/PerformanceReport/routes/tenant");
-
+const DailyReport = require("./src/PerformanceReport/routes/DailyReport");
 
 
 
@@ -48,7 +48,7 @@ app.use("/api/trialbalance", trialBalanceMergeRoutes);
 app.use("/ProjectsTrailBalance", ProjectsTrailBalanceRoutes);
 app.use("/CapexBalance", CapexBalance);
 app.use("/api/tenant", tenant);
-
+app.use("/api/dailyReprt", DailyReport);
 
 
 
