@@ -23,7 +23,8 @@
     "multer": "^2.0.2",
     "node-cron": "^4.2.1",
     "node-fetch": "^2.7.0",
-    "papaparse": "^5.5.3"
+    "papaparse": "^5.5.3",
+    "uuid": "^14.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.11"

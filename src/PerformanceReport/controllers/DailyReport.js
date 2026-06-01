@@ -1,10 +1,10 @@
 const multer = require("multer");
 const fs = require("fs");
-const path = require("path");
+const { v4: uuidv4 } = require("uuid"); // npm install uuid
 const { bucket } = require("../database/firebase");
 const PdfRecord = require("../models/DailyReport");
 
-// ─── Multer Config (local temp storage) ───────────────────────────────────────
+// ─── Multer Config ─────────────────────────────────────────────────────────────
 const upload = multer({
   dest: "uploads/",
   fileFilter: (req, file, cb) => {
@@ -19,37 +19,49 @@ const upload = multer({
 
 // ─── Helper: Upload file to Firebase ──────────────────────────────────────────
 const uploadToFirebase = async (localPath, destFileName) => {
-  const [file] = await bucket.upload(localPath, {
+  const token = uuidv4(); // ✅ unique token generate karo
+
+  await bucket.upload(localPath, {
     destination: destFileName,
     metadata: {
       contentType: "application/pdf",
+      metadata: {
+        firebaseStorageDownloadTokens: token, // ✅ token attach karo
+      },
     },
-    public: true, // 👈 yahi fix hai
   });
 
-  const publicUrl = `https://storage.googleapis.com/${bucket.name}/${destFileName}`;
+  // ✅ Firebase proper URL with token — direct accessible
+  const encodedPath = encodeURIComponent(destFileName);
+  const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodedPath}?alt=media&token=${token}`;
+
   return publicUrl;
 };
 
 // ─── Helper: Delete file from Firebase ────────────────────────────────────────
 const deleteFromFirebase = async (fileUrl) => {
   try {
-    // Extract file path from URL
-    // URL format: https://storage.googleapis.com/BUCKET_NAME/path/to/file.pdf
-    const bucketName = bucket.name;
-    const prefix = `https://storage.googleapis.com/${bucketName}/`;
-    const filePath = fileUrl.replace(prefix, "");
+    let filePath;
+
+    // ✅ Dono URL formats handle karo (purana google URL + naya firebase URL)
+    if (fileUrl.includes("firebasestorage.googleapis.com")) {
+      // https://firebasestorage.googleapis.com/v0/b/BUCKET/o/ENCODED_PATH?alt=media&token=TOKEN
+      const urlObj = new URL(fileUrl);
+      filePath = decodeURIComponent(urlObj.pathname.split("/o/")[1]);
+    } else {
+      // https://storage.googleapis.com/BUCKET_NAME/path/to/file.pdf
+      const prefix = `https://storage.googleapis.com/${bucket.name}/`;
+      filePath = fileUrl.replace(prefix, "");
+    }
 
     await bucket.file(filePath).delete();
     console.log(`Deleted from Firebase: ${filePath}`);
   } catch (err) {
-    // If file not found, ignore — don't crash the upload
     console.warn("Could not delete previous file from Firebase:", err.message);
   }
 };
 
 // ─── POST /api/pdf/upload ──────────────────────────────────────────────────────
-// Upload a new PDF — previous PDF is auto-deleted from Firebase + MongoDB
 exports.uploadPdf = [
   upload.single("file"),
   async (req, res) => {
@@ -66,30 +78,33 @@ exports.uploadPdf = [
       localFilePath = req.file.path;
 
       const { category } = req.body;
-      // category is optional — use it if you want to group PDFs
-      // e.g. "salary_slip", "invoice", "report"
-      // If not provided, defaults to "general"
       const pdfCategory = category || "general";
 
-      // ── STEP 1: Find previous PDF for this category ──────────────────────────
+      // ✅ File name — agar original name nahi hai to "DailyReport" use karo
+      const rawName = req.file.originalname
+        ? req.file.originalname.replace(/\s+/g, "_")
+        : "DailyReport.pdf";
+
+      // ✅ Extension check — agar .pdf nahi hai to add karo
+      const fileName = rawName.endsWith(".pdf") ? rawName : `${rawName}.pdf`;
+
+      // ── STEP 1: Find previous PDF ────────────────────────────────────────────
       const previousPdf = await PdfRecord.findOne({ category: pdfCategory });
 
-      // ── STEP 2: Delete previous PDF from Firebase ────────────────────────────
+      // ── STEP 2: Delete previous from Firebase ────────────────────────────────
       if (previousPdf && previousPdf.fileUrl) {
         await deleteFromFirebase(previousPdf.fileUrl);
       }
 
       // ── STEP 3: Upload new PDF to Firebase ───────────────────────────────────
       const timestamp = Date.now();
-      const originalName = req.file.originalname.replace(/\s+/g, "_");
-      const destFileName = `pdfs/${pdfCategory}/${timestamp}_${originalName}`;
-
+      const destFileName = `pdfs/${pdfCategory}/${timestamp}_${fileName}`;
       const fileUrl = await uploadToFirebase(localFilePath, destFileName);
 
-      // ── STEP 4: Save/Update record in MongoDB ────────────────────────────────
+      // ── STEP 4: Save/Update MongoDB ──────────────────────────────────────────
       const pdfData = {
         category: pdfCategory,
-        fileName: originalName,
+        fileName,
         fileUrl,
         firebasePath: destFileName,
         uploadedAt: new Date(),
@@ -97,16 +112,13 @@ exports.uploadPdf = [
       };
 
       let savedPdf;
-
       if (previousPdf) {
-        // Update existing record
         savedPdf = await PdfRecord.findByIdAndUpdate(
           previousPdf._id,
           pdfData,
           { new: true }
         );
       } else {
-        // Create new record
         savedPdf = await PdfRecord.create(pdfData);
       }
 
@@ -122,12 +134,9 @@ exports.uploadPdf = [
       });
     } catch (error) {
       console.error("PDF Upload Error:", error);
-
-      // Cleanup local temp file on error
       if (localFilePath && fs.existsSync(localFilePath)) {
         try { fs.unlinkSync(localFilePath); } catch {}
       }
-
       return res.status(500).json({
         success: false,
         message: error.message || "PDF upload failed",
@@ -137,11 +146,9 @@ exports.uploadPdf = [
 ];
 
 // ─── GET /api/pdf ──────────────────────────────────────────────────────────────
-// Get current PDF (by category)
 exports.getPdf = async (req, res) => {
   try {
     const { category = "general" } = req.query;
-
     const pdf = await PdfRecord.findOne({ category }).lean();
 
     if (!pdf) {
@@ -151,10 +158,7 @@ exports.getPdf = async (req, res) => {
       });
     }
 
-    return res.status(200).json({
-      success: true,
-      data: pdf,
-    });
+    return res.status(200).json({ success: true, data: pdf });
   } catch (error) {
     console.error(error);
     return res.status(500).json({
@@ -165,11 +169,9 @@ exports.getPdf = async (req, res) => {
 };
 
 // ─── GET /api/pdf/all ──────────────────────────────────────────────────────────
-// Get all PDFs (all categories)
 exports.getAllPdfs = async (req, res) => {
   try {
     const pdfs = await PdfRecord.find().lean();
-
     return res.status(200).json({
       success: true,
       total: pdfs.length,
@@ -185,11 +187,9 @@ exports.getAllPdfs = async (req, res) => {
 };
 
 // ─── DELETE /api/pdf ───────────────────────────────────────────────────────────
-// Manually delete a PDF by category
 exports.deletePdf = async (req, res) => {
   try {
     const { category = "general" } = req.query;
-
     const pdf = await PdfRecord.findOne({ category });
 
     if (!pdf) {
@@ -199,10 +199,7 @@ exports.deletePdf = async (req, res) => {
       });
     }
 
-    // Delete from Firebase
     await deleteFromFirebase(pdf.fileUrl);
-
-    // Delete from MongoDB
     await PdfRecord.findByIdAndDelete(pdf._id);
 
     return res.status(200).json({
