@@ -18,24 +18,17 @@ const upload = multer({
 });
 
 // ─── Helper: Upload file to Firebase ──────────────────────────────────────────
-const uploadToFirebase = (localPath, destFileName) => {
-  return new Promise((resolve, reject) => {
-    bucket.upload(localPath, {
-      destination: destFileName,
-      metadata: {
-        contentType: "application/pdf",
-      },
-    }, async (err, file) => {
-      if (err) return reject(err);
-
-      // Make file publicly accessible
-      await file.makePublic();
-
-      // Public URL
-      const publicUrl = `https://storage.googleapis.com/${bucket.name}/${destFileName}`;
-      resolve(publicUrl);
-    });
+const uploadToFirebase = async (localPath, destFileName) => {
+  const [file] = await bucket.upload(localPath, {
+    destination: destFileName,
+    metadata: {
+      contentType: "application/pdf",
+    },
+    public: true, // 👈 yahi fix hai
   });
+
+  const publicUrl = `https://storage.googleapis.com/${bucket.name}/${destFileName}`;
+  return publicUrl;
 };
 
 // ─── Helper: Delete file from Firebase ────────────────────────────────────────

@@ -48,7 +48,7 @@ app.use("/api/trialbalance", trialBalanceMergeRoutes);
 app.use("/ProjectsTrailBalance", ProjectsTrailBalanceRoutes);
 app.use("/CapexBalance", CapexBalance);
 app.use("/api/tenant", tenant);
-app.use("/api/dailyReprt", DailyReport);
+app.use("/api/dailyReport", DailyReport);
 
 
 
