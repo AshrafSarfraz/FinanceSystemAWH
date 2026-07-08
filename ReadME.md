@@ -4,6 +4,9 @@ https://financesystemawh-rtjt.onrender.com
    
                 . src/performanceReport/dolphin/ww_Api
 
+
+http://localhost:3000/api/trialbalance/raw-trial-balance    raw data but first change the code 
+
 http://localhost:3000/api/trialbalance           get raw Data from Api(Post method)
 http://localhost:3000/api/trialbalance/sync      get and push mapped data in mongoDb  (Post method)
 http://localhost:3000/api/trialbalance/mongo          get the monthly wise data after merging   (get method)

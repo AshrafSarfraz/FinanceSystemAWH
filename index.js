@@ -60,7 +60,7 @@ mongoose
 
 // ✅ Schedule nightly at 4 AM Qatar time
 cron.schedule(
-  "0 4 * * *",
+  "0 9 * * *",
   async () => {
     await runNightlySync();
   },
