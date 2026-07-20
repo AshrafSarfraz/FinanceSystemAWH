@@ -81,7 +81,7 @@ async function syncTrialBalance() {
   const cleaned = result.recordset.map(pickFields);
 
   if (!cleaned.length) {
-    console.log("ℹ️ No TypeR='P' records found for year >= 2023");
+    console.log(" No TypeR='P' records found for year >= 2023");
     return;
   }
 
@@ -108,7 +108,7 @@ async function syncTrialBalance() {
   );
   
 
-  console.log(`✅ Synced ${cleaned.length} records (TypeR=P, year>=2023)`);
+  console.log(`✅ Synced ${cleaned.length} records (TypeR=P, year>=2025)`);
 }
 
 
