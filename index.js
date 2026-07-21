@@ -44,7 +44,7 @@ const CashFlow = require("./src/PerformanceReport/routes/CashFlow");
 
 app.use("/api/othercmp_trialbalance", otherCmpTrialBalance);
 app.use("/api/trialbalance", trialBalSyncRoutes);
-app.use("/cashFlow", CashFlow);
+app.use("/api/cashFlow", CashFlow);
 app.use("/budgets", UploadBudget);
 app.use("/api/trialbalance", trialBalanceMergeRoutes);
 app.use("/ProjectsTrailBalance", ProjectsTrailBalanceRoutes);
