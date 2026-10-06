@@ -81,10 +81,12 @@ async function mergeAllIntoTrialBalance(req, res) {
   try {
     const yearGte = Number(req.body?.yearGte) || 2023;
     // sync both
-    await Promise.all([
-      syncWestWalk(),
-      syncOtherCompanies(),
-    ]);
+    // await Promise.all([
+    //   syncWestWalk(),
+    //   syncOtherCompanies(),
+    // ]);
+    await syncWestWalk();
+
     // fetch
     const { westwalk, other } = await fetchBothFromMongo({ yearGte });
     // combine
