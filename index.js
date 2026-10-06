@@ -64,13 +64,13 @@ mongoose
   .catch((err) => console.log("Mongo Error ❌", err));
 
 // ✅ Schedule nightly at 4 AM Qatar time
-// cron.schedule(
-//   "0 9 * * *",
-//   async () => {
-//     await runNightlySync();
-//   },
-//   { timezone: "Asia/Qatar" }
-// );
+cron.schedule(
+  "0 9 * * *",
+  async () => {
+    await runNightlySync();
+  },
+  { timezone: "Asia/Qatar" }
+);
 
 console.log("⏰ Nightly sync scheduled at 4:00 AM Asia/Qatar");
 
