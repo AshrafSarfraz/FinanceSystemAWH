@@ -94,8 +94,8 @@ function applyReRevenueComponentFromCc2(r) {
       cc2: "Residential",
     };
   }
-
-  if (cc2.includes("commercial")) {
+  
+  if (cc2.includes("commercial rental")) {
     return {
       ...r,
       component: "Commercial",
