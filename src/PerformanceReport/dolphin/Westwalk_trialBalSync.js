@@ -87,7 +87,7 @@ function applyReRevenueComponentFromCc2(r) {
   const cc2Raw = String(r.cc2 || "").trim();
   const cc2 = cc2Raw.toLowerCase();
 
-  if (cc2.includes("residential")) {
+  if (cc2.includes("residential rental")) {
     return {
       ...r,
       component: "Residential",
