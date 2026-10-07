@@ -85,19 +85,26 @@ function applyReRevenueComponentFromCc2(r) {
   if (company !== C_RE || !isRevenue) return r;
 
   const cc2Raw = String(r.cc2 || "").trim();
-  const cc2 = cc2Raw.toLowerCase();
 
+  const cc2 = cc2Raw
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+
+  // Residential Rental
   if (cc2.includes("residential rental")) {
     return {
       ...r,
+      accountno: "41111",
       component: "Residential",
       cc2: "Residential",
     };
   }
-  
+
+  // Commercial Rental
   if (cc2.includes("commercial rental")) {
     return {
       ...r,
+      accountno: "41112",
       component: "Commercial",
       cc2: "Commercial",
     };
